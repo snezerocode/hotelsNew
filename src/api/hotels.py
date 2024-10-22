@@ -40,9 +40,10 @@ def edit_hotel_attr(id: int, hotel_data: HotelPatch):
 
 
 @router.delete("/{hotel_id}", summary="Удаление отеля по ID")
-def delete_hotel(hotel_id: int):
-    global hotels
-    hotels = [hotel for hotel in hotels if hotel["id"] != hotel_id]
+async def delete_hotel(hotel_id: int):
+    async with async_session_maker() as session:
+        await HotelsRepository(session).delete(id=hotel_id)
+        await session.commit()
     return {"status": "ok"}
 
 
@@ -57,17 +58,16 @@ async def add_hotel(hotel_data: Hotel = Body(openapi_examples={
     }}
 })):
     async with async_session_maker() as session:
-        await BaseRepository(session).add(hotel_data)
-    return {"status": "ok", "data": hotel_data}
+        hotel = await BaseRepository(session).add(hotel_data)
+        await session.commit()
+    return {"status": "ok", "data": hotel}
 
 
 @router.put("/{hotel_id}", summary="Полное изменение свойств отеля", description="Все поля обязательны")
-def edit_hotel(id: int, hotel_data: Hotel):
-    global hotels
-    for hotel in hotels:
-        if hotel["id"] == id:
-            hotel["title"] = hotel_data.title
-            hotel["name"] = hotel_data.name
+async def edit_hotel(hotel_data: Hotel, id: int):
+    async with async_session_maker() as session:
+        await HotelsRepository(session).edit(hotel_data, id=id)
+        await session.commit()
     return {"status": "ok"}
 
 
