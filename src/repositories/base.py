@@ -1,6 +1,6 @@
 from distutils.util import execute
 
-from sqlalchemy import select, insert
+from sqlalchemy import select, insert, delete, update, Boolean
 from fastapi import Body
 from src.schemas.hotels import Hotel
 from src.models.hotels import HotelsOrm
@@ -32,20 +32,12 @@ class BaseRepository:
 
         return result.scalars().one()
 
-    async def edit(self, data: BaseModel, **filter_by) -> None:
-        query = select(self.model).filter_by(**filter_by)
-        result = await self.session.execute(query)
-        item = result.scalars().first()
-        if item:
-            for key, value in data.model_dump().items():
-                setattr(item, key, value)
+    async def edit(self, data: BaseModel, exclude_unset: Boolean = False, **filter_by) -> None:
+        update_stmt = update(self.model).filter_by(**filter_by).values(**data.model_dump(exclude_unset=exclude_unset))
+        await self.session.execute(update_stmt)
+
 
 
     async def delete(self, **filter_by) -> None:
-        query = select(self.model).filter_by(**filter_by)
-        result = await self.session.execute(query)
-        item = result.scalars().first()
-
-        if item:
-            await self.session.delete(item)
-
+        delete_stmt = delete(self.model).filter_by(**filter_by)
+        await self.session.execute(delete_stmt)

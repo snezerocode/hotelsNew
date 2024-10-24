@@ -28,15 +28,13 @@ hotels = [
 
 @router.patch("/{id}", summary="Частичное обновление данных об отеле", description="Длинное описание ")
 def edit_hotel_attr(id: int, hotel_data: HotelPatch):
-    global hotels
-    for hotel in hotels:
-        if hotel["id"] == id:
-            if hotel_data.title:
-                hotel["title"] = hotel_data.title
-            if hotel_data.name:
-                hotel["name"] = hotel_data.name
-            return {"status": "ok"}
-    return {"status": "not found"}
+
+    with async_session_maker as session:
+        HotelsRepository(session).edit(hotel_data, exclude_unset=True, id=id)
+        session.commit()
+
+    return {"status": "ok"}
+
 
 
 @router.delete("/{hotel_id}", summary="Удаление отеля по ID")
@@ -58,7 +56,7 @@ async def add_hotel(hotel_data: Hotel = Body(openapi_examples={
     }}
 })):
     async with async_session_maker() as session:
-        hotel = await BaseRepository(session).add(hotel_data)
+        hotel = await HotelsRepository(session).add(hotel_data)
         await session.commit()
     return {"status": "ok", "data": hotel}
 
@@ -69,6 +67,11 @@ async def edit_hotel(hotel_data: Hotel, id: int):
         await HotelsRepository(session).edit(hotel_data, id=id)
         await session.commit()
     return {"status": "ok"}
+
+@router.get("/{hotel_id}", summary="Получение отеля по ID")
+async def get_hotel(id: int):
+    async with async_session_maker() as session:
+        return await HotelsRepository(session).get_one_or_none(id=id)
 
 
 @router.get("", summary="Получение списка отелей")

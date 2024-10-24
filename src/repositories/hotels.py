@@ -28,3 +28,7 @@ class HotelsRepository(BaseRepository):
         result = await self.session.execute(query)
         return result.scalars().all()
 
+    async def get_one_or_none(self, id):
+        query = select(HotelsOrm).filter_by(id=id)
+        result = await self.session.execute(query)
+        return result.scalars().one_or_none()
