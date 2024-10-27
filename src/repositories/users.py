@@ -4,5 +4,5 @@ from src.models.users import UsersOrm
 from src.schemas.users import User
 
 class UsersRepository(BaseRepository):
-    models = UsersOrm
+    model = UsersOrm
     schema = User
