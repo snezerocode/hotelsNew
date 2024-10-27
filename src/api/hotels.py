@@ -6,7 +6,7 @@ from src.database import async_session_maker
 from src.models.hotels import HotelsOrm
 from src.repositories.base import BaseRepository
 from src.repositories.hotels import HotelsRepository
-from src.schemas.hotels import Hotel, HotelPatch
+from src.schemas.hotels import Hotel, HotelPatch, HotelAdd
 from src.api.dependencies import PaginationDep
 
 from sqlalchemy import insert, select, func
@@ -27,11 +27,11 @@ hotels = [
 
 
 @router.patch("/{id}", summary="Частичное обновление данных об отеле", description="Длинное описание ")
-def edit_hotel_attr(id: int, hotel_data: HotelPatch):
+async def edit_hotel_attr(id: int, hotel_data: HotelPatch):
 
-    with async_session_maker as session:
-        HotelsRepository(session).edit(hotel_data, exclude_unset=True, id=id)
-        session.commit()
+    async with async_session_maker() as session:
+        await HotelsRepository(session).edit(hotel_data, exclude_unset=True, id=id)
+        await session.commit()
 
     return {"status": "ok"}
 
@@ -46,7 +46,7 @@ async def delete_hotel(hotel_id: int):
 
 
 @router.post("", summary="Добавление отеля")
-async def add_hotel(hotel_data: Hotel = Body(openapi_examples={
+async def add_hotel(hotel_data: HotelAdd = Body(openapi_examples={
     "a": {"summary": "Sochi", "value": {
         "title": "Отель сочи 5 звезд у моря",
         "location": "ул.Морская,  д2"
@@ -62,7 +62,7 @@ async def add_hotel(hotel_data: Hotel = Body(openapi_examples={
 
 
 @router.put("/{hotel_id}", summary="Полное изменение свойств отеля", description="Все поля обязательны")
-async def edit_hotel(hotel_data: Hotel, id: int):
+async def edit_hotel(hotel_data: HotelAdd, id: int):
     async with async_session_maker() as session:
         await HotelsRepository(session).edit(hotel_data, id=id)
         await session.commit()
@@ -72,7 +72,6 @@ async def edit_hotel(hotel_data: Hotel, id: int):
 async def get_hotel(id: int):
     async with async_session_maker() as session:
         return await HotelsRepository(session).get_one_or_none(id=id)
-
 
 @router.get("", summary="Получение списка отелей")
 async def get_hotels(
