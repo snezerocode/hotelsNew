@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Response
-from starlette.requests import Request
 
 from src.repositories.users import UsersRepository
 from src.database import async_session_maker
 from src.schemas.users import UserRequestAdd, UserAdd
 from src.services.auth import AuthService
+from src.api.dependencies import UserIdDep
 
 router = APIRouter(prefix="/auth", tags=["Авторизация и аутентификация"])
 
@@ -37,15 +37,13 @@ async def login_user(
     response.set_cookie("access_token", access_token)
     return {"access_token": access_token}
 
+@router.get("/logout")
+async def logout(response: Response):
+    response.delete_cookie("access_token")
+    return {"status": "Bye Bye"}
 
-@router.get("/only_auth")
-async def only_auth(
-        request: Request
-):
-    cookies = request.cookies
-
-    for key, value in cookies.items():
-        if key == "access_token":
-            return {"status": "success", "cookies": cookies}
-
-    return {"status": "fail", "cookies": None}
+@router.get("/me")
+async def get_me(user_id: UserIdDep):
+    async with async_session_maker() as session:
+        user = await UsersRepository(session).get_one_or_none(id=user_id)
+        return user
