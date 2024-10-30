@@ -1,16 +1,10 @@
-from select import select
-
 from fastapi import APIRouter, Query, Body
 
 from src.database import async_session_maker
-from src.models.hotels import HotelsOrm
-from src.repositories.base import BaseRepository
-from src.repositories.hotels import HotelsRepository
-from src.schemas.hotels import Hotel, HotelPatch, HotelAdd
-from src.api.dependencies import PaginationDep
 
-from sqlalchemy import insert, select, func
-from src.database import engine
+from src.repositories.hotels import HotelsRepository
+from src.schemas.hotels import HotelPatch, HotelAdd
+from src.api.dependencies import PaginationDep
 
 router = APIRouter(prefix="/hotel", tags=["Отели"])
 
@@ -28,13 +22,11 @@ hotels = [
 
 @router.patch("/{id}", summary="Частичное обновление данных об отеле", description="Длинное описание ")
 async def edit_hotel_attr(id: int, hotel_data: HotelPatch):
-
     async with async_session_maker() as session:
         await HotelsRepository(session).edit(hotel_data, exclude_unset=True, id=id)
         await session.commit()
 
     return {"status": "ok"}
-
 
 
 @router.delete("/{hotel_id}", summary="Удаление отеля по ID")
@@ -57,6 +49,7 @@ async def add_hotel(hotel_data: HotelAdd = Body(openapi_examples={
 })):
     async with async_session_maker() as session:
         hotel = await HotelsRepository(session).add(hotel_data)
+
         await session.commit()
     return {"status": "ok", "data": hotel}
 
@@ -68,10 +61,12 @@ async def edit_hotel(hotel_data: HotelAdd, id: int):
         await session.commit()
     return {"status": "ok"}
 
+
 @router.get("/{hotel_id}", summary="Получение отеля по ID")
 async def get_hotel(id: int):
     async with async_session_maker() as session:
         return await HotelsRepository(session).get_one_or_none(id=id)
+
 
 @router.get("", summary="Получение списка отелей")
 async def get_hotels(
