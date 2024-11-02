@@ -1,3 +1,5 @@
+from fastapi import HTTPException
+
 from fastapi import APIRouter
 from src.api.dependencies import UserIdDep
 from src.api.dependencies import DBDep
@@ -14,6 +16,19 @@ async def create_bookings(booking_data: BookingAddRequest, user_id: UserIdDep, d
     await db.commit()
 
     return {"status":"ok", "data": _booking_data}
+
+@router.get("")
+async def get_all_bookings(db: DBDep):
+    result = await db.bookings.get_all()
+    return {"status":"ok", "data": result}
+
+@router.get("/me")
+async def get_user_bookings(user_id: UserIdDep, db: DBDep):
+
+    user = await db.users.get_one_or_none(id=user_id)
+
+    result = await db.bookings.get_all(user_id=user.id)
+    return {"status": "ok", "data": result}
 
 
 
