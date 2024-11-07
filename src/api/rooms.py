@@ -3,7 +3,7 @@ from fastapi import APIRouter, Body, HTTPException, Query
 
 from datetime import date
 
-
+from src.schemas.facilities import RoomFacilityAdd
 from src.schemas.rooms import RoomAdd, RoomPatch, RoomAddRequest, RoomPatchRequest
 from src.api.dependencies import DBDep
 
@@ -23,21 +23,13 @@ async def get_rooms(
 
 
 @router.post("/{hotel_id}/rooms", summary="Добавление номера с передачей ID отеля")
-async def create_room(hotel_id: int, db: DBDep, room_data: RoomAddRequest = Body(openapi_examples={
-    "1": {"summary": "Standart double", "value": {
-        "title": "Стандартный двухместный",
-        "description": "Двухместынй номер",
-        "price": 3000,
-        "quantity": 3
-    }}, "2": {"summary": "Standart single", "value": {
-        "title": "Стандартный одноместный",
-        "description": "Одноместный номер",
-        "price": 2500,
-        "quantity": 2
-    }}
-})):
+async def create_room(hotel_id: int, db: DBDep, room_data: RoomAddRequest = Body()):
     _room_data = RoomAdd(hotel_id=hotel_id, **room_data.model_dump())
     room = await db.rooms.add(_room_data)
+
+    rooms_facilities_data = [RoomFacilityAdd(room_id=room.id, facility_id=f_id) for f_id in room_data.facilities_ids]
+    print(rooms_facilities_data)
+    await db.rooms_facilities.add_bulk(rooms_facilities_data)
     await db.commit()
 
     return {"status": "OK", "data": room}
@@ -60,6 +52,9 @@ async def edit_room(hotel_id: int, db: DBDep, room_id: int, room_data: RoomAddRe
     room = await db.rooms.get_one_or_none(id=room_id, hotel_id=hotel_id)
     if not room:
         raise HTTPException(status_code=404, detail="Комнаты с таким ID нет")
+
+
+
     await db.rooms.edit(_room_data, id=room_id)
     await db.commit()
 
