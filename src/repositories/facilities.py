@@ -1,52 +1,48 @@
 from src.models.facilities import FacilitiesOrm, RoomsFacilitiesOrm
 from src.repositories.base import BaseRepository
+from src.repositories.mappers.mappers import FacilityDataMapper
 from src.schemas.facilities import Facility, RoomFacility
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, insert
 
 
 class FacilitiesRepository(BaseRepository):
     model = FacilitiesOrm
-    schema = Facility
+    mapper = FacilityDataMapper
 
 class RoomsFacilitiesRepository(BaseRepository):
     model = RoomsFacilitiesOrm
     schema = RoomFacility
 
-    async def update_facilities(self, room_id: int, facilities_ids: list[int]):
-        # Получаем текущие удобства для данной комнаты
-        current_facilities_query = select(RoomsFacilitiesOrm).where(RoomsFacilitiesOrm.room_id == room_id)
+    async def update_facilities(self, room_id: int, facilities_ids: list[int]) -> None:
+        # Получаем id текущих удобств для данной комнаты
+        current_facilities_query = select(RoomsFacilitiesOrm.facility_id).filter_by(room_id=room_id)
         current_facilities_result = await self.session.execute(current_facilities_query)
-        current_facilities = current_facilities_result.scalars().all()
+        current_facilities_ids: list[int] = current_facilities_result.scalars().all()
 
-        # Извлекаем ID текущих удобств
-        current_facility_ids = {facility.facility_id for facility in current_facilities}
+        # Определяем ids для удаления
+        ids_to_delete: list[int] = list(set(current_facilities_ids) - set(facilities_ids))
 
-        # Определяем новые удобства для добавления
-        new_facility_ids = set(facilities_ids)
-
-        # Определяем удобства для удаления (которые есть в базе, но не переданы)
-        facilities_to_remove = current_facility_ids - new_facility_ids
+        # Определяем ids для добавления
+        ids_to_insert: list[int] = list(set(facilities_ids) - set(current_facilities_ids))
 
         # Удаляем старые удобства
-        if facilities_to_remove:
-            await self.session.execute(
-                delete(RoomsFacilitiesOrm).where(
-                    RoomsFacilitiesOrm.room_id == room_id,
-                    RoomsFacilitiesOrm.facility_id.in_(facilities_to_remove)
-                )
-            )
+        if ids_to_delete:
+            delete_m2m_facilities_stmt = (
+                delete(RoomsFacilitiesOrm)
+                .filter(RoomsFacilitiesOrm.room_id == room_id,
+                        RoomsFacilitiesOrm.facility_id.in_(ids_to_delete))
 
-        # Определяем удобства для добавления (которые переданы, но отсутствуют в базе)
-        facilities_to_add = new_facility_ids - current_facility_ids
+            )
+            await self.session.execute(delete_m2m_facilities_stmt)
+
 
         # Добавляем новые удобства
-        for facility_id in facilities_to_add:
-            new_facility = RoomsFacilitiesOrm(room_id=room_id, facility_id=facility_id)
-            self.session.add(new_facility)
+        if ids_to_insert:
+            insert_m2m_facilities_stmt = (
+                insert(RoomsFacilitiesOrm)
+                .values([{"room_id": room_id, "facility_id": f_id} for f_id in ids_to_insert])
 
-        await self.session.commit()  # Фиксируем изменения в базе данных
+            )
+            await self.session.execute(insert_m2m_facilities_stmt)
 
-        return {
-            "removed_facilities": list(facilities_to_remove),
-            "added_facilities": list(facilities_to_add)
-        }  # Возвращаем ID удаленных и добавленных удобств
+
