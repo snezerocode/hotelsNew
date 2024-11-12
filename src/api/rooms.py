@@ -16,11 +16,9 @@ async def get_room(hotel_id: int, room_id: int, db: DBDep):
     if not room:
         raise HTTPException(status_code=404, detail="Комната не найдена")
 
-    existing_facilities = await db.rooms_facilities.get_filtered(room_id=room_id)
 
 
     return {"status": "OK", "room": room}
-
 
 
 @router.get("/{hotel_id}/rooms", summary="Получение всех номеров отеля")
@@ -67,38 +65,31 @@ async def edit_room(hotel_id: int, db: DBDep, room_id: int, room_data: RoomAddRe
         raise HTTPException(status_code=404, detail="Комнаты с таким ID нет")
     await db.rooms.edit(_room_data, id=room_id)
 
-    if room_data.facilities_ids is not None:
-        result = await db.rooms_facilities.update_facilities(room_id=room_id, facilities_ids=room_data.facilities_ids)
+    result = await db.rooms_facilities.update_facilities(room_id=room_id, facilities_ids=room_data.facilities_ids)
 
     await db.commit()
 
     return {
         "status": "ok",
-        "data": _room_data,
-        "facilities": result  # Возвращаем результат обновления удобств
     }
 
 
 @router.patch("/{hotel_id}/rooms/{room_id}", summary="Частичное обновление данных о номере")
 async def edit_room_attr(room_data: RoomPatchRequest, hotel_id: int, room_id: int, db: DBDep):
-    _room_data = RoomPatch(hotel_id=hotel_id, **room_data.model_dump(exclude_unset=True))
+
+    _room_data_dict = room_data.model_dump(exclude_unset=True)
+    _room_data = RoomPatch(hotel_id=hotel_id, **_room_data_dict)
 
     room = await db.rooms.get_one_or_none(id=room_id, hotel_id=hotel_id)
     if not room:
         raise HTTPException(status_code=404, detail="Комната не найдена")
-    await db.rooms.edit(_room_data, id=room_id, exclude_unset=True)
 
-    if room_data.facilities_ids is not None:
-        result = await db.rooms_facilities.update_facilities(room_id=room_id, facilities_ids=room_data.facilities_ids)
+    await db.rooms.edit(_room_data, id=room_id, exclude_unset=True)
+    if "facilities_ids" in _room_data_dict:
+        await db.rooms_facilities.update_facilities(room_id=room_id, facilities_ids=_room_data_dict["facilities_ids"])
 
     await db.commit()
 
     return {
-        "status": "ok",
-        "data": _room_data,
-        "facilities": result  # Возвращаем результат обновления удобств
+        "status": "ok"
     }
-
-
-
-
