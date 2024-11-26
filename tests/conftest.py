@@ -1,5 +1,11 @@
-
 import pytest
+
+from unittest import mock
+
+# Добавление мока, который заменяет декоратор на пустую функцию, благодаря чему код не ломается
+# функция в ковычках заменяется на лямбду - пустой декоратор. Месторасположение важно!
+mock.patch("fastapi_cache.decorator.cache", lambda *args, **kwargs: lambda f: f).start()
+
 import json
 
 from src.api.dependencies import get_db
@@ -15,9 +21,10 @@ from src.schemas.rooms import RoomAdd
 from src.utils.db_manager import DBManager
 
 
-@pytest.fixture(scope="session" ,autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 async def check_test_engine():
     assert settings.MODE == "TEST"
+
 
 @pytest.fixture
 async def db() -> DBManager:
@@ -30,16 +37,15 @@ async def get_db_null_pool():
     async with DBManager(session_factory=async_session_maker_null_pool) as db:
         yield db
 
+
 # переписывания метода получения генератора подключения к бд
 app.dependency_overrides[get_db] = get_db_null_pool
 
 
-
-#scope настройка прогона фикстуры function - перед каждой функцией,
+# scope настройка прогона фикстуры function - перед каждой функцией,
 # module - каждый файл, package - внутри папки, session - внутри сессии
-@pytest.fixture(scope="session" ,autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 async def setup_database(check_test_engine):
-
     async with engine_null_pool.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
@@ -58,16 +64,15 @@ async def setup_database(check_test_engine):
         await db_.rooms.add_bulk(rooms_)
         await db_.commit()
 
-# инициализация клиента с включением lifespan в тестах
+
 @pytest.fixture(scope="session")
 async def ac() -> AsyncClient:
-    async with app.router.lifespan_context(app):
-        async with AsyncClient(app=app, base_url="https://testserver") as ac:
-            yield ac
+    async with AsyncClient(app=app, base_url="https://testserver") as ac:
+        yield ac
 
-@pytest.fixture(scope="session" ,autouse=True)
+
+@pytest.fixture(scope="session", autouse=True)
 async def register_user(setup_database, ac):
-
     await ac.post(
         "/auth/register",
         json={
@@ -77,6 +82,18 @@ async def register_user(setup_database, ac):
     )
 
 
+@pytest.fixture(scope="session", autouse=True)
+async def authenticated_ac(register_user, ac):
+    resp = await ac.post(
+        "/auth/login",
+        json={
+            "email": "email@example.com",
+            "password": "123456",
+        }
+    )
+    print("Залогинен!!!!!!!!!!!!", resp.status_code)
+    print("Ответ:", resp.json())
+    yield ac
 
 # @pytest.fixture(scope="session" ,autouse=True)
 # async def create_hotels(setup_database):
