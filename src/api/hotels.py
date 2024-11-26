@@ -5,7 +5,7 @@ from src.api.dependencies import PaginationDep, DBDep
 from fastapi_cache.decorator import cache
 
 
-router = APIRouter(prefix="/hotel", tags=["Отели"])
+router = APIRouter(prefix="/hotels", tags=["Отели"])
 
 @router.get("/{hotel_id}", summary="Получение отеля по ID")
 async def get_hotel(hotel_id: int, db: DBDep):

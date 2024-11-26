@@ -1,6 +1,8 @@
 
 import pytest
 import json
+
+from src.api.dependencies import get_db
 from src.config import settings
 from src.database import Base, engine_null_pool, async_session_maker_null_pool
 from src.models import *
@@ -21,6 +23,15 @@ async def check_test_engine():
 async def db() -> DBManager:
     async with DBManager(session_factory=async_session_maker_null_pool) as db:
         yield db
+
+
+# генератор для тестовой бд
+async def get_db_null_pool():
+    async with DBManager(session_factory=async_session_maker_null_pool) as db:
+        yield db
+
+# переписывания метода получения генератора подключения к бд
+app.dependency_overrides[get_db] = get_db_null_pool
 
 
 
@@ -47,10 +58,12 @@ async def setup_database(check_test_engine):
         await db_.rooms.add_bulk(rooms_)
         await db_.commit()
 
+# инициализация клиента с включением lifespan в тестах
 @pytest.fixture(scope="session")
 async def ac() -> AsyncClient:
-    async with AsyncClient(app=app, base_url="https://test") as ac:
-        yield ac
+    async with app.router.lifespan_context(app):
+        async with AsyncClient(app=app, base_url="https://testserver") as ac:
+            yield ac
 
 @pytest.fixture(scope="session" ,autouse=True)
 async def register_user(setup_database, ac):
