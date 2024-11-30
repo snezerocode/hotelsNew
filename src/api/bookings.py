@@ -24,15 +24,18 @@ async def get_user_bookings(user_id: UserIdDep, db: DBDep):
 
 
 @router.post("")
-async def create_bookings(booking_data: BookingAddRequest, user_id: UserIdDep, db: DBDep):
-    try:
-        # Передать данные в репозиторий для создания бронирования
-        await db.bookings.add_booking(data=booking_data, user_id=user_id)
-        return {"status": "OK", "message": "Бронирование успешно создано."}
-    except ValueError as e:
-        # Обработать ошибки, возникающие в репозитории
-        raise HTTPException(status_code=400, detail=str(e))
-
+async def add_booking(booking_data: BookingAddRequest, user_id: UserIdDep, db: DBDep):
+    room = await db.rooms.get_one_or_none(id=booking_data.room_id)
+    hotel = await db.hotels.get_one_or_none(id=room.hotel_id)
+    room_price: int = room.price
+    _booking_data = BookingAdd(
+        user_id=user_id,
+        price=room_price,
+        **booking_data.model_dump(),
+    )
+    booking = await db.bookings.add_booking(_booking_data, hotel_id=hotel.id)
+    await db.commit()
+    return {"status": "OK", "data": booking}
 
 
 
