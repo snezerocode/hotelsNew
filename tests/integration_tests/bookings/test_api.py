@@ -37,46 +37,42 @@ async def test_add_booking(
         assert "data" in res
 
 
-@pytest.fixture
-async def delete_all_bookings(db):
-    await db.bookings.delete()
-    await db.commit()
+@pytest.fixture(scope="module")
+async def delete_all_bookings(db_module):
+    await db_module.bookings.delete()
+    await db_module.commit()
 
 
-@pytest.mark.parametrize("room_id, date_from, date_to, bookings_to_create", [
+@pytest.mark.parametrize("room_id, date_from, date_to, booked_rooms", [
     (1, "2024-08-01", "2024-08-10", 1),
     (1, "2024-08-11", "2024-08-12", 2),
     (1, "2024-08-13", "2024-08-14", 3),
 ])
 async def test_add_and_get_my_bookings(
-        delete_all_bookings,
-        authenticated_ac,
         room_id,
         date_from,
         date_to,
-        bookings_to_create,
+        booked_rooms,
+        delete_all_bookings,
+        authenticated_ac,
 ):
-    # Создание указанного количества бронирований
-    for _ in range(bookings_to_create):
-        booking = await authenticated_ac.post(
-            "/bookings",
-            json={
-                "room_id": room_id,
-                "date_from": date_from,
-                "date_to": date_to,
-            }
-        )
-        assert booking.status_code == 200
+    response = await authenticated_ac.post(
+        "/bookings",
+        json={
+            "room_id": room_id,
+            "date_from": date_from,
+            "date_to": date_to,
+        }
+    )
+    assert response.status_code == 200
 
-    # Получение списка бронирований
-    res_bookings = await authenticated_ac.get("/bookings/me")
-    assert res_bookings.status_code == 200
+    response_my_bookings = await authenticated_ac.get("/bookings/me")
 
-    # Извлечение данных из ответа
-    response_data = res_bookings.json()
-    bookings_data = response_data["data"]
-    bookings = [BookingsOrm(**item) for item in bookings_data if isinstance(item, dict)]
+    assert response_my_bookings.status_code == 200
+    response_data = response_my_bookings.json()
 
-    # Проверка количества бронирований
-    assert len(bookings) == bookings_to_create, f"Ожидалось {bookings_to_create} бронирований, но получено {len(bookings)}"
+    bookings_data = response_data.get("data", [])
+
+    assert len(bookings_data) == booked_rooms
+
 

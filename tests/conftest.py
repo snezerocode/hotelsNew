@@ -26,10 +26,16 @@ async def check_test_engine():
     assert settings.MODE == "TEST"
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 async def db() -> DBManager:
     async with DBManager(session_factory=async_session_maker_null_pool) as db:
         yield db
+
+
+@pytest.fixture(scope="module")
+async def db_module() -> DBManager:
+    async with DBManager(session_factory=async_session_maker_null_pool) as db_module:
+        yield db_module
 
 
 # генератор для тестовой бд
