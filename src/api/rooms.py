@@ -1,4 +1,4 @@
-from http.client import HTTPException
+
 from fastapi import APIRouter, Body, HTTPException, Query
 
 from datetime import date
@@ -65,7 +65,7 @@ async def edit_room(hotel_id: int, db: DBDep, room_id: int, room_data: RoomAddRe
         raise HTTPException(status_code=404, detail="Комнаты с таким ID нет")
     await db.rooms.edit(_room_data, id=room_id)
 
-    result = await db.rooms_facilities.update_facilities(room_id=room_id, facilities_ids=room_data.facilities_ids)
+    await db.rooms_facilities.update_facilities(room_id=room_id, facilities_ids=room_data.facilities_ids)
 
     await db.commit()
 

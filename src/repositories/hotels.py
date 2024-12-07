@@ -1,5 +1,4 @@
 from sqlalchemy import select, func
-from datetime import date
 from src.models.hotels import HotelsOrm
 from src.models.rooms import RoomsOrm
 from src.repositories.base import BaseRepository

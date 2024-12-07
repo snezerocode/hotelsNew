@@ -1,7 +1,7 @@
 from src.models.facilities import FacilitiesOrm, RoomsFacilitiesOrm
 from src.repositories.base import BaseRepository
 from src.repositories.mappers.mappers import FacilityDataMapper
-from src.schemas.facilities import Facility, RoomFacility
+from src.schemas.facilities import RoomFacility
 from sqlalchemy import select, delete, insert
 
 

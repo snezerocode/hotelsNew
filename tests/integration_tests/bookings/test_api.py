@@ -1,6 +1,5 @@
 import pytest
 
-from src.models import BookingsOrm
 
 
 @pytest.mark.parametrize("room_id, date_from, date_to, status_code", [

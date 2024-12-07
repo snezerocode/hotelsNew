@@ -1,8 +1,5 @@
 from fastapi import HTTPException
-from sqlalchemy import select, func
-from datetime import date
 
-from src.models import RoomsOrm, BookingsOrm
 from src.models.bookings import BookingsOrm
 from src.repositories.base import BaseRepository
 from src.repositories.mappers.mappers import BookingDataMapper
