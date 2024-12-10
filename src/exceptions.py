@@ -12,3 +12,6 @@ class ObjectNotFoundException(CustomException):
 
 class AllRoomsAreBookedException(CustomException):
     detail = "Все номера забронированы"
+
+class DateToBeforeDateFromException(CustomException):
+    detail = "Дата выезда раньше даты заезда"

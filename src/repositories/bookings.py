@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 
-from src.exceptions import AllRoomsAreBookedException
+from src.exceptions import AllRoomsAreBookedException, DateToBeforeDateFromException
 from src.models.bookings import BookingsOrm
 from src.repositories.base import BaseRepository
 from src.repositories.mappers.mappers import BookingDataMapper
@@ -13,6 +13,8 @@ class BookingsRepository(BaseRepository):
     mapper = BookingDataMapper
 
     async def add_booking(self, data: BookingAdd, hotel_id: int):
+        if data.date_to <= data.date_from:
+            raise DateToBeforeDateFromException
         rooms_ids_to_get = rooms_ids_for_booking(
             date_from=data.date_from, date_to=data.date_to, hotel_id=hotel_id
         )
