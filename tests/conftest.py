@@ -1,4 +1,4 @@
-#ruff: noqa: E402
+# ruff: noqa: E402
 
 import pytest
 
@@ -13,14 +13,14 @@ import json
 from src.api.dependencies import get_db
 from src.config import settings
 from src.database import Base, engine_null_pool, async_session_maker_null_pool
-from src.models import * #noqa
+from src.models import *  # noqa
 
-from httpx import AsyncClient #noqa
+from httpx import AsyncClient  # noqa
 
-from src.main import app #noqa
-from src.schemas.hotels import HotelAdd #noqa
-from src.schemas.rooms import RoomAdd #noqa
-from src.utils.db_manager import DBManager #noqa
+from src.main import app  # noqa
+from src.schemas.hotels import HotelAdd  # noqa
+from src.schemas.rooms import RoomAdd  # noqa
+from src.utils.db_manager import DBManager  # noqa
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -82,11 +82,7 @@ async def ac() -> AsyncClient:
 @pytest.fixture(scope="session", autouse=True)
 async def register_user(setup_database, ac):
     await ac.post(
-        "/auth/register",
-        json={
-            "email": "email@example.com",
-            "password": "123456"
-        }
+        "/auth/register", json={"email": "email@example.com", "password": "123456"}
     )
 
 
@@ -97,10 +93,11 @@ async def authenticated_ac(register_user, ac):
         json={
             "email": "email@example.com",
             "password": "123456",
-        }
+        },
     )
     assert ac.cookies["access_token"]
     yield ac
+
 
 # @pytest.fixture(scope="session" ,autouse=True)
 # async def create_hotels(setup_database):

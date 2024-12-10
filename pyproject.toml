@@ -1,0 +1,5 @@
+# ruff config
+
+[tool.ruff]
+
+line-length = 88

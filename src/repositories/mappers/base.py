@@ -8,8 +8,6 @@ DBModelType = TypeVar("DBModelType", bound=Base)
 SchemaType = TypeVar("SchemaType", bound=BaseModel)
 
 
-
-
 class DataMapper:
     db_model: type[DBModelType] = None
     schema: type[SchemaType] = None

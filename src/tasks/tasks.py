@@ -14,6 +14,7 @@ def test_task():
     sleep(5)
     print("Я поспал")
 
+
 @celery_instance.task
 def resize_image(image_path: str):
     """
@@ -44,7 +45,9 @@ def resize_image(image_path: str):
 
                 # Формируем путь для сохранения
                 file_name, file_ext = os.path.splitext(os.path.basename(image_path))
-                output_path = os.path.join(output_dir, f"{file_name}_{width}px{file_ext}")
+                output_path = os.path.join(
+                    output_dir, f"{file_name}_{width}px{file_ext}"
+                )
 
                 # Сохранить изображение
                 resized_img.save(output_path)
@@ -52,6 +55,7 @@ def resize_image(image_path: str):
 
     except Exception as e:
         print(f"Ошибка при обработке изображения: {e}")
+
 
 async def get_bookings_with_today_checkin_helper():
     print("Я запускаюсь")

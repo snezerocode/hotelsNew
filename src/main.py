@@ -9,7 +9,7 @@ from fastapi_cache.backends.redis import RedisBackend
 import sys
 from pathlib import Path
 
-#from src.api.dependencies import get_db
+# from src.api.dependencies import get_db
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -36,15 +36,16 @@ async def run_send_emails_regularly():
 
 """
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # При старте приложения
-    #asyncio.create_task(run_send_emails_regularly())
-    #await redis_manager.connect()
+    # asyncio.create_task(run_send_emails_regularly())
+    # await redis_manager.connect()
     FastAPICache.init(RedisBackend(redis_manager.redis), prefix="fastapi-cache")
     yield
     # При выключении\перезагрузке приложения
-    #await redis_manager.close()
+    # await redis_manager.close()
 
 
 app = FastAPI(lifespan=lifespan)

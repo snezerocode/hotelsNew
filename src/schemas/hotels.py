@@ -5,9 +5,7 @@ class HotelAdd(BaseModel):
     title: str
     location: str
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class Hotel(HotelAdd):

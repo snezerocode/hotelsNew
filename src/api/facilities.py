@@ -9,7 +9,6 @@ from src.tasks.tasks import test_task
 router = APIRouter(prefix="/facilities", tags=["Удобства"])
 
 
-
 @router.get("")
 @cache(expire=10)
 async def get_facilities(db: DBDep):
@@ -17,6 +16,7 @@ async def get_facilities(db: DBDep):
     result = await db.facilities.get_all()
 
     return {"status": "ok", "data": result}
+
 
 @router.post("")
 async def create_facility(db: DBDep, facility_data: FacilityAdd = Body()):
@@ -28,9 +28,7 @@ async def create_facility(db: DBDep, facility_data: FacilityAdd = Body()):
     return {"status": "ok", "data": facility}
 
 
-
-
-#from src.init import redis_manager
+# from src.init import redis_manager
 # @router.get("/")
 # async def get_facilities(db: DBDep):
 #     facilities_from_cache = await redis_manager.get("facilities")

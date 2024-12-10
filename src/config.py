@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    MODE: Literal["TEST", "LOCAL", "DEV", "PROD" ]
+    MODE: Literal["TEST", "LOCAL", "DEV", "PROD"]
     DB_HOST: str
     DB_PORT: int
     DB_USER: str
@@ -20,15 +20,12 @@ class Settings(BaseSettings):
     def REDIS_URL(self):
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
 
-
     # dsn
     @property
     def DB_URL(self):
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     model_config = SettingsConfigDict(env_file=".env")
-
-
 
 
 settings = Settings()

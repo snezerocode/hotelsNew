@@ -8,6 +8,7 @@ from src.database import Base
 if typing.TYPE_CHECKING:
     from src.models import RoomsOrm
 
+
 class FacilitiesOrm(Base):
     __tablename__ = "facilities"
 
@@ -19,8 +20,6 @@ class FacilitiesOrm(Base):
         back_populates="facilities",
         secondary="rooms_facilities",
     )
-
-
 
 
 class RoomsFacilitiesOrm(Base):

@@ -8,6 +8,7 @@ from src.database import Base
 if typing.TYPE_CHECKING:
     from src.models import FacilitiesOrm
 
+
 class RoomsOrm(Base):
     __tablename__ = "rooms"
 
@@ -19,7 +20,7 @@ class RoomsOrm(Base):
     quantity: Mapped[int]
 
     facilities: Mapped[list["FacilitiesOrm"]] = relationship(
-        "FacilitiesOrm",         # связанный класс
-        back_populates="rooms",           # название записи текущего класса в связанном классе в relationship
-        secondary="rooms_facilities",     # связывающая таблица
+        "FacilitiesOrm",  # связанный класс
+        back_populates="rooms",  # название записи текущего класса в связанном классе в relationship
+        secondary="rooms_facilities",  # связывающая таблица
     )
