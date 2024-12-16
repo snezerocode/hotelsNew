@@ -1,9 +1,14 @@
 from datetime import date
 
 from sqlalchemy import select, insert
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 
-from src.exceptions import DateToBeforeDateFromException, ObjectNotFoundException
+from src.exceptions import (
+    DateToBeforeDateFromException,
+    ObjectNotFoundException,
+    RoomNotFoundException,
+)
 from src.models.rooms import RoomsOrm
 from src.repositories.base import BaseRepository
 from src.repositories.mappers.mappers import RoomDataMapper, RoomDataWithRelsDataMapper
@@ -19,10 +24,11 @@ class RoomsRepository(BaseRepository):
 
     async def add(self, data: RoomAdd):
         # Проверка существования отеля
-        hotel = await self.session.execute(select(Hotel).where(Hotel.id == data.hotel_id))
+        hotel = await self.session.execute(
+            select(Hotel).where(Hotel.id == data.hotel_id)
+        )
         if not hotel.scalars().first():
             raise ObjectNotFoundException
-
 
         add_data_stmt = (
             insert(self.model).values(**data.model_dump()).returning(self.model)
@@ -30,7 +36,6 @@ class RoomsRepository(BaseRepository):
         result = await self.session.execute(add_data_stmt)
         model = result.scalars().one()
         return self.mapper.map_to_domain_entity(model)
-
 
     async def get_filtered_by_time(
         self,
@@ -53,7 +58,7 @@ class RoomsRepository(BaseRepository):
             for model in result.unique().scalars().all()
         ]
 
-    async def get_one_or_none(self, **filter_by):
+    async def get_one(self, **filter_by):
         # Основной запрос, сразу загружаем `facilities` через `joinedload`
         room_query = (
             select(self.model)
@@ -63,10 +68,11 @@ class RoomsRepository(BaseRepository):
 
         # Выполнение запроса и получение результата
         result = await self.session.execute(room_query)
-        model = result.unique().scalar_one_or_none()
 
-        if model is None:
-            return None
+        try:
+            model = result.unique().scalar_one()
+        except NoResultFound:
+            raise RoomNotFoundException
 
         # Валидация полученной модели через Pydantic-схему с удобствами
         return RoomDataWithRelsDataMapper.map_to_domain_entity(model)

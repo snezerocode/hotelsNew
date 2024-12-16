@@ -38,8 +38,6 @@ class HotelsRepository(BaseRepository):
         limit,
         offset,
     ) -> list[Hotel]:
-        if date_to <= date_from:
-            raise DateToBeforeDateFromException
         rooms_ids_to_get = rooms_ids_for_booking(date_from=date_from, date_to=date_to)
         hotels_ids_to_get = (
             select(RoomsOrm.hotel_id)

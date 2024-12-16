@@ -1,8 +1,10 @@
 import asyncio
-
+import logging
 from PIL import Image
 import os
 from time import sleep
+
+from sqlalchemy.testing.plugin.plugin_base import logging
 
 from src.database import async_session_maker_null_pool
 from src.tasks.celery_app import celery_instance
@@ -23,6 +25,7 @@ def resize_image(image_path: str):
     :param image_path: Путь к исходному изображению.
     :param output_dir: Папка для сохранения сжатых изображений.
     """
+    logging.DEBUG(f"calling functions with image_path {image_path}")
     output_dir: str = "src/static/images"
     # Убедимся, что папка для сохранения существует
     os.makedirs(output_dir, exist_ok=True)
@@ -51,17 +54,16 @@ def resize_image(image_path: str):
 
                 # Сохранить изображение
                 resized_img.save(output_path)
-                print(f"Сохранено: {output_path}")
+                logging.info(f"Сохранено: {output_path}")
 
     except Exception as e:
-        print(f"Ошибка при обработке изображения: {e}")
+        logging.error(f"Ошибка при обработке изображения: {e}")
 
 
 async def get_bookings_with_today_checkin_helper():
-    print("Я запускаюсь")
     async with DBManager(session_factory=async_session_maker_null_pool) as db:
         bookings = await db.bookings.get_bookings_with_today_checkin()
-        print(f"{bookings}")
+        logging.debug(f"{bookings}")
 
 
 @celery_instance.task(name="bookings_today_checkin")
