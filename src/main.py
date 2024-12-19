@@ -44,12 +44,12 @@ async def run_send_emails_regularly():
 async def lifespan(app: FastAPI):
     # При старте приложения
     # asyncio.create_task(run_send_emails_regularly())
-    # await redis_manager.connect()
+    await redis_manager.connect()
     FastAPICache.init(RedisBackend(redis_manager.redis), prefix="fastapi-cache")
     logging.info("Fastapi cache initialized")
     yield
     # При выключении\перезагрузке приложения
-    # await redis_manager.close()
+    await redis_manager.close()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -68,4 +68,4 @@ def func():
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", reload=True)
+    uvicorn.run("main:app", host="0.0.0.0",reload=True)

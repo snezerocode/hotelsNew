@@ -1,4 +1,8 @@
+from sqlalchemy import select
+
 from fastapi import HTTPException
+
+from datetime import date
 
 from src.exceptions import AllRoomsAreBookedException, DateToBeforeDateFromException
 from src.models.bookings import BookingsOrm
@@ -26,3 +30,12 @@ class BookingsRepository(BaseRepository):
             return new_booking
         else:
             raise AllRoomsAreBookedException
+
+    async def get_bookings_with_today_checkin(self):
+        today = date.today()  # Получаем сегодняшнюю дату
+        query = (
+            select(BookingsOrm)  # Здесь указываем только модель
+            .where(BookingsOrm.date_from == today)  # Фильтруем по дате
+        )
+        res = await self.session.execute(query)  # Добавляем await для асинхронного вызова
+        return [self.mapper.map_to_domain_entity(booking) for booking in res.scalars().all()]

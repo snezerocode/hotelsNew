@@ -3,7 +3,7 @@ from datetime import timedelta, datetime, timezone
 
 from fastapi import HTTPException, Response
 
-from src.api.dependencies import UserIdDep
+
 from src.config import settings
 from passlib.context import CryptContext
 
@@ -15,6 +15,7 @@ from src.exceptions import (
 )
 from src.schemas.users import UserRequestAdd, UserAdd
 from src.services.base import BaseService
+
 
 
 class AuthService(BaseService):
@@ -49,7 +50,7 @@ class AuthService(BaseService):
         self,
         data: UserRequestAdd,
     ):
-        hashed_password = AuthService().hash_password(data.password)
+        hashed_password = self.hash_password(data.password)
         new_user_data = UserAdd(email=data.email, hashed_password=hashed_password)
         try:
             await self.db.users.add(new_user_data)
@@ -61,9 +62,9 @@ class AuthService(BaseService):
         user = await self.db.users.get_user_with_hashed_password(email=data.email)
         if not user:
             raise UserNotFoundException
-        if not AuthService().verify_password(data.password, user.hashed_password):
+        if not self.verify_password(data.password, user.hashed_password):
             raise WrongPasswordException
-        access_token = AuthService().create_access_token({"user_id": user.id})
+        access_token = self.create_access_token({"user_id": user.id})
         response.set_cookie("access_token", access_token)
 
         return access_token
@@ -71,6 +72,6 @@ class AuthService(BaseService):
     async def logout(self, response: Response):
         response.delete_cookie("access_token")
 
-    async def get_me(self, user_id: UserIdDep):
+    async def get_me(self, user_id: int):
         user = await self.db.users.get_one_or_none(id=user_id)
         return user
